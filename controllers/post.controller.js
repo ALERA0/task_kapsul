@@ -58,17 +58,14 @@ const feed = asyncHandler(async (req, res) => {
     .limit(limit);
 
   // Takip ettiği kişilerin retweet ettiği postları bul
-  const retweetedPosts = await Post.find({
-    
+  const retweetedPosts = await Post.find({    
       retweets: { $exists: true, $ne: [] } ,
-    
   })
     .populate("userId", "username")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
-    console.log(retweetedPosts)
 
   const allPosts = [...followingPosts, ...retweetedPosts];
 
