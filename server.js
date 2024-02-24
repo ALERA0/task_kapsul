@@ -26,17 +26,13 @@ const userRouter = require("./routes/user.routes");
 const postRouter = require("./routes/post.routes");
 
 
-
-
-
-
 app.use(cookieParser());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(cors());
 
 
-app.use("/api/auth", authRouter);
+app.use("/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/post", postRouter);
 
