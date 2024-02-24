@@ -47,16 +47,34 @@ const feed = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  // Takip ettiği kullanıcıların postlarını bul
-  const posts = await Post.find({
-    userId: { $in: [...followingUsers, userId] },
+  // Takip ettiği kişilerin postlarını bul
+  const followingPosts = await Post.find({
+    userId: { $in: followingUsers },
   })
     .populate("userId", "username")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
-  if (!posts || posts.length === 0) {
+  // Takip ettiği kişilerin retweet ettiği postları bul
+  const retweetedPosts = await Post.find({
+    $and: [
+      { userId: { $in: followingUsers } },
+      { retweets: { $exists: true, $ne: [] } },
+    ],
+  })
+    .populate("userId", "username")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const allPosts = [...followingPosts, ...retweetedPosts];
+
+  const sortedPosts = allPosts
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(skip, skip + limit);
+
+  if (!sortedPosts || sortedPosts.length === 0) {
     throw new customError(errorCodes.POST_NOT_FOUND_ERROR);
   }
 
@@ -64,14 +82,14 @@ const feed = asyncHandler(async (req, res) => {
     successCodes.POST_FETCHED_SUCCESSFULLY,
     {
       followingUsers: user.followings,
-      posts,
+      posts: sortedPosts,
     }
   );
 
   res.json(successResponse);
 });
 
-// POST /likes - Bir paylaşımı beğenme
+
 const likePost = asyncHandler(async (req, res) => {
   const { postId } = req.body;
   const userId = req.user._id;
@@ -97,7 +115,6 @@ const likePost = asyncHandler(async (req, res) => {
   res.json(successResponse);
 });
 
-// DELETE /likes - Bir paylaşımın beğenisini geri alma
 const unlikePost = asyncHandler(async (req, res) => {
   const { postId } = req.body;
   const userId = req.user._id;
@@ -124,4 +141,47 @@ const unlikePost = asyncHandler(async (req, res) => {
   res.json(successResponse);
 });
 
-module.exports = { createPost, feed, likePost, unlikePost };
+const retweetPost = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const postId = req.params.postId;
+
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw new customError(errorCodes.POST_NOT_FOUND_ERROR);
+  }
+
+  // Kullanıcı daha önce retweet etmediyse ekle
+  if (!post.retweets.includes(userId)) {
+    post.retweets.push(userId);
+    await post.save();
+  } else {
+    throw new customError(errorCodes.POST_ALREADY_RETWEETED_ERROR);
+  }
+
+  const successResponse = new customSuccess(
+    successCodes.POST_RETWEET_SUCCESSFULLY,
+    {
+      post,
+    }
+  );
+  res.json(successResponse);
+});
+
+const getAllPosts = asyncHandler(async (req, res) => {
+  const posts = await Post.find().populate("userId", "username");
+  if (!posts || posts.length === 0) {
+    throw new customError(errorCodes.POST_NOT_FOUND_ERROR);
+  }
+
+  const successResponse = new customSuccess(
+    successCodes.POST_FETCHED_SUCCESSFULLY,
+    {
+      posts,
+    }
+  );
+
+  res.json(successResponse);
+});
+  
+
+module.exports = { createPost, feed, likePost, unlikePost,retweetPost,getAllPosts };

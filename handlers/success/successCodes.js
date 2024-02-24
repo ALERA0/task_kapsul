@@ -40,6 +40,10 @@ const successCodes = {
   POST_UNLIKED_SUCCESSFULLY:{
     code: StatusCodes.OK,
     message: "Gönderi beğenisi başarıyla kaldırıldı."
+  },
+  POST_RETWEET_SUCCESSFULLY:{
+    code: StatusCodes.OK,
+    message: "Gönderi başarıyla retweetlendi."
   }
 };
 

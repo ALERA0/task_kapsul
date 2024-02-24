@@ -79,6 +79,10 @@ const errorCodes = {
     code: StatusCodes.BAD_REQUEST,
     message: "Kullanıcı kendini takipten çıkaramaz."
   },
+  POST_ALREADY_RETWEETED_ERROR:{
+    code: StatusCodes.BAD_REQUEST,
+    message: "Bu gönderiyi zaten retweetlediniz."
+  }
 };
 
 
