@@ -42,6 +42,7 @@ const feed = asyncHandler(async (req, res) => {
   }
 
   const followingUsers = user.followings;
+  
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -58,15 +59,16 @@ const feed = asyncHandler(async (req, res) => {
 
   // Takip ettiği kişilerin retweet ettiği postları bul
   const retweetedPosts = await Post.find({
-    $and: [
-      { userId: { $in: followingUsers } },
-      { retweets: { $exists: true, $ne: [] } },
-    ],
+    
+      retweets: { $exists: true, $ne: [] } ,
+    
   })
     .populate("userId", "username")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
+
+    console.log(retweetedPosts)
 
   const allPosts = [...followingPosts, ...retweetedPosts];
 
